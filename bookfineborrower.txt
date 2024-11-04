@@ -94,6 +94,9 @@ BEGIN
     UPDATE Borrower 
     SET Status = 'R' 
     WHERE Roll_no = roll_new AND NameofBook = book_name;
+    EXCEPTION
+    WHEN OTHERS THEN
+        SELECT 'An error occurred while processing the fine calculation.' AS ErrorMessage;
 END;
 //
 
