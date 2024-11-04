@@ -1,0 +1,49 @@
+
+MongoDB – Aggregation and Indexing: 
+Design and Develop MongoDB Queries using aggregation and indexing with suitable 
+example using MongoDB.
+
+
+
+
+
+db.sales.insertMany([
+    { "product": "Laptop", "price": 1200, "quantity": 3, "date": new Date("2024-01-01") },
+    { "product": "Laptop", "price": 1200, "quantity": 2, "date": new Date("2024-02-01") },
+    { "product": "Phone", "price": 800, "quantity": 5, "date": new Date("2024-01-15") },
+    { "product": "Tablet", "price": 600, "quantity": 7, "date": new Date("2024-02-10") },
+    { "product": "Phone", "price": 800, "quantity": 4, "date": new Date("2024-03-01") }
+]);
+db.sales.aggregate([
+    {
+        $group: {
+            _id: "$product",
+            totalRevenue: { $sum: { $multiply: ["$price", "$quantity"] } }
+        }
+    }
+]);
+db.sales.aggregate([
+    {
+        $group: {
+            _id: null,  // `null` groups everything together
+            averagePrice: { $avg: "$price" }
+        }
+    }
+]);
+db.sales.aggregate([
+    {
+        $match: {
+            date: { $gte: new Date("2024-01-01"), $lt: new Date("2025-01-01") }
+        }
+    },
+    {
+        $group: {
+            _id: "$product",
+            totalQuantity: { $sum: "$quantity" }
+        }
+    }
+]);
+db.sales.createIndex({ product: 1 });
+db.sales.createIndex({ product: 1, date: -1 });
+db.sales.getIndexes();
+db.sales.dropIndex("product_1");
