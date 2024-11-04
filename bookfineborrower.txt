@@ -1,0 +1,117 @@
+ Unnamed PL/SQL code block: Use of Control structure and Exception handling is 
+mandatory. 
+Suggested Problem statement: 
+Consider Tables:  
+1. Borrower(Roll_no, Name, DateofIssue, NameofBook, Status)  
+2. Fine(Roll_no,Date,Amt) 
+Note: Instructor will frame the problem statement for writing PL/SQL block in line with above 
+statement. 
+5.  Named PL/SQL Block: PL/SQL Stored Procedure and Stored Function. 
+Write a Stored Procedure namely proc_Grade for the categorization of student. If marks scored by 
+students in examination is <=1500 and marks>=990 then student will be placed in distinction 
+category if marks scored are between 989 and 900 category is first class, if marks 899 and 825 
+category is Higher Second Class. 
+ Accept Roll_no and NameofBook from user.   
+ Check the number of days (from date of issue). 
+ If days are between 15 to 30 then fine amount will be Rs 5per day. 
+ If no. of days>30, per day fine will be Rs 50 per day and for days less than 30, Rs. 5 per 
+day.   
+ After submitting the book, status will change from I to R. 
+ If condition of fine is true, then details will be stored into fine table. 
+ Also handles the exception by named exception handler or user define exception handler.
+
+
+
+
+
+
+
+-- Creating the Borrower table
+CREATE TABLE IF NOT EXISTS Borrower (
+    Roll_no INT PRIMARY KEY,
+    Name VARCHAR(50),
+    DateofIssue DATE,
+    NameofBook VARCHAR(50),
+    Status CHAR(1) DEFAULT 'I'
+);
+
+
+
+
+-- Creating the Fine table
+CREATE TABLE IF NOT EXISTS Fine (
+    Roll_no INT,
+    Date DATE,
+    Amt DECIMAL(10, 2),
+    FOREIGN KEY (Roll_no) REFERENCES Borrower(Roll_no)
+);
+
+
+
+
+
+INSERT INTO Borrower (Roll_no, Name, DateofIssue, NameofBook, Status)
+VALUES 
+    (1, 'Alice', DATE_SUB(CURDATE(), INTERVAL 20 DAY), 'DBMS', 'I'),   -- 20 days overdue
+    (2, 'Bob', DATE_SUB(CURDATE(), INTERVAL 35 DAY), 'Networks', 'I'), -- 35 days overdue
+    (3, 'Charlie', DATE_SUB(CURDATE(), INTERVAL 10 DAY), 'Algorithms', 'I'), -- 10 days overdue (no fine)
+    (4, 'David', DATE_SUB(CURDATE(), INTERVAL 28 DAY), 'Operating Systems', 'I'); -- 28 days overdue
+
+
+
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE BookFine(IN roll_new INT, IN book_name VARCHAR(50))
+BEGIN
+    DECLARE days_late INT;
+    DECLARE fine_amount DECIMAL(10,2) DEFAULT 0;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND
+    BEGIN
+        SELECT CONCAT('ROLL NO ', roll_new, ' OR Book ', book_name, ' NOT FOUND') AS NoRecord;
+    END;
+
+    -- Calculate the number of days since the book was issued
+    SELECT DATEDIFF(CURDATE(), DateofIssue) INTO days_late 
+    FROM Borrower 
+    WHERE Roll_no = roll_new AND NameofBook = book_name;
+
+    -- Determine fine amount based on the number of days
+    IF days_late > 15 AND days_late <= 30 THEN
+        SET fine_amount = days_late * 5;
+    ELSEIF days_late > 30 THEN
+        SET fine_amount = days_late * 50;
+    END IF;
+
+    -- Insert fine details if there's a fine
+    IF fine_amount > 0 THEN
+        INSERT INTO Fine (Roll_no, Date, Amt) VALUES (roll_new, CURDATE(), fine_amount);
+    END IF;
+
+    -- Update the status of the book in the Borrower table to 'R' (Returned)
+    UPDATE Borrower 
+    SET Status = 'R' 
+    WHERE Roll_no = roll_new AND NameofBook = book_name;
+END;
+//
+
+DELIMITER ;
+
+
+
+
+
+CALL BookFine(1, 'DBMS');
+CALL BookFine(2, 'Networks');
+CALL BookFine(3, 'Algorithms');
+CALL BookFine(4, 'Operating Systems');
+
+
+
+SELECT * FROM Fine;
+
+
+SELECT * FROM Borrower;
+
