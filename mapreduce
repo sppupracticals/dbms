@@ -1,0 +1,27 @@
+MongoDB – Map-reduces operations: 
+Implement Map reduces operation with suitable example using MongoDB. 
+
+db.sales.insertMany([
+    { "product": "Laptop", "price": 1200, "quantity": 3 },
+    { "product": "Laptop", "price": 1200, "quantity": 2 },
+    { "product": "Phone", "price": 800, "quantity": 5 },
+    { "product": "Tablet", "price": 600, "quantity": 7 },
+    { "product": "Phone", "price": 800, "quantity": 4 }
+]);
+
+var mapFunction = function() {
+    emit(this.product, this.price * this.quantity);
+};
+
+var reduceFunction = function(key, values) {
+    return Array.sum(values);
+};
+
+db.sales.mapReduce(
+    mapFunction,
+    reduceFunction,
+    { out: "total_revenue" }
+);
+
+db.total_revenue.find().pretty();
+
